@@ -36,12 +36,12 @@ int *initBlock = malloc(MAX_SIZE);
 // task makes request of size of memory
 // find fit of task
 
-
-void *memory_malloc(void);		// allocates memory, every time a block is allocated, store the size of that block
-								// returns a pointer to the first byte of the block of memory it just allocated
-void *memory_free(void);		// deallocates memory
-void *thread_mms(void *arg);	// function for sending
-void *thread_User(void *arg);	// function for receiving
+int 	*createBlockSizes(void)		// Creates randomized memory block sizes
+void 	*memory_malloc(void);		// allocates memory, every time a block is allocated, store the size of that block
+									// returns a pointer to the first byte of the block of memory it just allocated
+void 	*memory_free(void);			// deallocates memory
+void 	*thread_mms(void *arg);		// function for sending
+void 	*thread_User(void *arg);	// function for receiving
 
 sem_t bin_sem;		// semaphore
 pthread_mutex_t mutx;	// mutex
@@ -51,8 +51,8 @@ struct memblock
 {
 	int size;			// size of memory block
 	int* location;		// location of memory block
-	int* front;			// block before current block
-	int* back;			// block after current block
+	int* last;			// block before current block
+	int* next;			// block after current block
 };
 
 int main(int argc, char **argv)
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
      // {
     /* initialize random seed: */
     srand (time(NULL));
-
+	int i;
     pthread_t* threads;
     void *thread_result;
     int state1, state2;
@@ -69,9 +69,13 @@ int main(int argc, char **argv)
     state1 = pthread_mutex_init(&mutx, NULL);
 	//semaphore initialization, first value = 0
     state2 = sem_init(&bin_sem, 0 ,0);
-    
-    memBlock *blocks;
 
+
+	int *sizes = createBlockSizes();
+	for(numBlocks = 0; sizes[numBlocks] != 0; numBlocks++)
+
+    
+	
     if(state1||state2!=0)
       puts("Error mutex & semaphore initialization!!!");
     
@@ -85,7 +89,7 @@ int main(int argc, char **argv)
       
     }
 
-    
+    for(numBlocks = 0; sizes[numBlocks] != 0; numBlocks++)
 
 
     // Waiting buyer threads to terminate
@@ -105,7 +109,24 @@ int main(int argc, char **argv)
     return 0;
   }
 
-int createBlockSizes(void)
+memBlock *initMemBlock(int *sizes, int numBlocks)
+{
+	int last;
+	memBlock *blocks = (memBlock*)malloc(sizeof(memBlock) * numBlocks);
+	for(int j = 0; j < numBlocks; j++)
+	{
+		memBlock[j].size = sizes[j];
+		if(numBlocks == 0)
+		{
+			memBlock[j].location = initBlock;
+			memBlock[j].last = 0;
+		}
+		else
+			memBlock[j].location = initBlock + memBlock[j].last.size;
+			memBlock[j].last = last;
+	}
+}
+int *createBlockSizes(void)
 {
 	int *sizes = (int*)malloc(MAX_SIZE * sizeof(int));
 	int tempSize;
