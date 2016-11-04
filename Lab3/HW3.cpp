@@ -61,34 +61,27 @@ int main(int argc, char **argv)
     if(state1||state2!=0)
       puts("Error mutex & semaphore initialization!!!");
     
-    
 
     // Create provider threads
-    for(int j = 0; j < argv[1] - 1; j++)
+    for(j = 0; j < argv[1] - 1; j++)
     {    
-      pthread_create(&threads[j], NULL, thread_Insert, (void*)j);
+      pthread_create(&threads[j], NULL, thread_User, (void*)j);
       
     }
     sleep(1);
     
     // Create buyer threads
-    for(long int i = 0; i < BUYER_NUM; i++)
-    {    
-      pthread_create(&bID[i], NULL, thread_Remove, (void*)i);
-    }
+ 
+    pthread_create(&threads[argv[1]], NULL, thread_MMS, (void*)i);
 
     // Waiting buyer threads to terminate
-    for(int k = 0; k < BUYER_NUM; k++)
+    for(int k = 0; k < [argv[1] - 1]; k++)
     { 
       //printf("Buyers executed: %d\n", k + 1);
-      pthread_join(bID[k], &thread_result);
+      pthread_join(threads[k], &thread_result);
     }
     // Waiting buyer threads to terminate
-    for(int l = 0; l < PROVIDER_NUM; l++)
-    { 
-      //printf("PROVIDER executed: %d\n", l + 1);
-      pthread_join(pID[l], &thread_result);
-    }
+	pthread_join(thread[argv[1]], &thread_result);
 
     sem_destroy(&bin_sem);	// destroy semaphore
     pthread_mutex_destroy(&mutx);	// destroy mutex
