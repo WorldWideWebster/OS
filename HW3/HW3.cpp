@@ -2,7 +2,7 @@
  * Sean Webster
  * Operating Systems
  * Homework 3
- * Due 10/13
+ * Due 11/4/2016
  * 
  * 
  * ***************************************************
@@ -19,29 +19,41 @@
 #include<signal.h>
 #include<time.h>
 #include<queue>
-#include <stdlib.h>
+#include<stdlib.h>
+#include<math.h>
 
 
-#define MAX_SIZE 4096
+#define MAX_SIZE 64
+#define POWER log2(MAX_SIZE)
+
+// Allocate large block of memory for use in mms
+int *initBlock = malloc(MAX_SIZE);
 
 
-int mms = malloc(MAX_SIZE);
 
-
-// Allocate large block of memory
 // realloc-segment block into sections of power 2
 // create task requiring memory
+// task makes request of size of memory
 // find fit of task
 
-// global variable, all threads can acess
-void *memoryMalloc(void);
-void *thread_Insert(void *arg);	// function for sending
-void *thread_Remove(void *arg);	// function for receiving
+
+void *memory_malloc(void);		// allocates memory, every time a block is allocated, store the size of that block
+								// returns a pointer to the first byte of the block of memory it just allocated
+void *memory_free(void);		// deallocates memory
+void *thread_mms(void *arg);	// function for sending
+void *thread_User(void *arg);	// function for receiving
 
 sem_t bin_sem;		// semaphore
 pthread_mutex_t mutx;	// mutex
 
-
+// Struct for memory objects in a linked list form
+struct memblock
+{
+	int size;			// size of memory block
+	int* location;		// location of memory block
+	int* front;			// block before current block
+	int* back;			// block after current block
+};
 
 int main(int argc, char **argv)
 {
@@ -53,42 +65,37 @@ int main(int argc, char **argv)
     pthread_t* threads;
     void *thread_result;
     int state1, state2;
+	//mutex initialization
     state1 = pthread_mutex_init(&mutx, NULL);
+	//semaphore initialization, first value = 0
     state2 = sem_init(&bin_sem, 0 ,0);
-    //mutex initialization
-    //semaphore initialization, first value = 0
+    
+    memBlock *blocks;
 
     if(state1||state2!=0)
       puts("Error mutex & semaphore initialization!!!");
     
-    
-
-    // Create provider threads
-    for(int j = 0; j < argv[1] - 1; j++)
+	// Create MMS thread 
+    pthread_create(&threads[argv[1]], NULL, thread_MMS, (void*)i);
+	
+    // Create 'user' threads
+    for(j = 0; j < argv[1] - 1; j++)
     {    
-      pthread_create(&threads[j], NULL, thread_Insert, (void*)j);
+      pthread_create(&threads[j], NULL, thread_User, (void*)j);
       
     }
-    sleep(1);
+
     
-    // Create buyer threads
-    for(long int i = 0; i < BUYER_NUM; i++)
-    {    
-      pthread_create(&bID[i], NULL, thread_Remove, (void*)i);
-    }
+
 
     // Waiting buyer threads to terminate
-    for(int k = 0; k < BUYER_NUM; k++)
+    for(int k = 0; k < [argv[1] - 1]; k++)
     { 
       //printf("Buyers executed: %d\n", k + 1);
-      pthread_join(bID[k], &thread_result);
+      pthread_join(threads[k], &thread_result);
     }
     // Waiting buyer threads to terminate
-    for(int l = 0; l < PROVIDER_NUM; l++)
-    { 
-      //printf("PROVIDER executed: %d\n", l + 1);
-      pthread_join(pID[l], &thread_result);
-    }
+	pthread_join(thread[argv[1]], &thread_result);
 
     sem_destroy(&bin_sem);	// destroy semaphore
     pthread_mutex_destroy(&mutx);	// destroy mutex
@@ -98,9 +105,31 @@ int main(int argc, char **argv)
     return 0;
   }
 
-
+int createBlockSizes(void)
+{
+	int *sizes = (int*)malloc(MAX_SIZE * sizeof(int));
+	int tempSize;
+	int cumSize = 0;
+	int curRand;
+	for(int i; cumSize <= MAX_SIZE; i++)
+	{
+	    curRand = rand() % ((int)POWER - 1);
+	    while(curRand == 0)
+	        curRand = rand() % ((int)POWER - 1);
+		tempSize = pow(2, curRand);
+		while(tempSize + cumSize > MAX_SIZE)
+			tempSize = pow(2, curRand);
+		cumSize += tempSize;
+		sizes[i] = tempSize;
+}
+  
+int memory_malloc(memBlock **block)			// creates blocks of memory for thread
+{
+	block.size = ;
+}
+  
   // Provider inserts item into queue
-  void *thread_Insert(void *arg)
+  void *thread_MMS(void *arg)
   {
     int theGoods = rand() % 10 + 1;
     printf("Creating Provider Thread: %d with item %d\n", (int*)arg, theGoods);
