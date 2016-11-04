@@ -22,12 +22,18 @@
 #include<stdlib.h>
 #include<math.h>
 
-
+#define FALSE 0
+#define TRUE 1
 #define MAX_SIZE 64
 #define POWER log2(MAX_SIZE)
+#define FIRST_FIT 1
+#define BEST_FIT 2
+#define WORSE_FIT 3
+
+#DEFINE FIT 1
 
 // Allocate large block of memory for use in mms
-int *initBlock = malloc(MAX_SIZE);
+
 
 
 
@@ -53,6 +59,8 @@ struct memblock
 	int* location;		// location of memory block
 	int* last;			// block before current block
 	int* next;			// block after current block
+	int free;
+	int sizeFilled;
 };
 
 int main(int argc, char **argv)
@@ -109,21 +117,32 @@ int main(int argc, char **argv)
     return 0;
   }
 
+// malloc and initialize memory blocks
 memBlock *initMemBlock(int *sizes, int numBlocks)
 {
-	int last;
+	int *last;
+	int *next;
 	memBlock *blocks = (memBlock*)malloc(sizeof(memBlock) * numBlocks);
 	for(int j = 0; j < numBlocks; j++)
 	{
 		memBlock[j].size = sizes[j];
-		if(numBlocks == 0)
+		
+		last = memBlock[i].location;
+		
+		if(j == 0)
 		{
-			memBlock[j].location = initBlock;
+			memBlock[i].location = (int)malloc(memBlock[i].size * sizeof(int));
 			memBlock[j].last = 0;
 		}
 		else
-			memBlock[j].location = initBlock + memBlock[j].last.size;
+			memBlock[i].location = next;
 			memBlock[j].last = last;
+		if(j == numBlocks)
+		{
+			next = 0;
+		}
+		else
+			next = (int)malloc(memBlock[i + 1].size * sizeof(int));
 	}
 }
 int *createBlockSizes(void)
@@ -142,12 +161,10 @@ int *createBlockSizes(void)
 			tempSize = pow(2, curRand);
 		cumSize += tempSize;
 		sizes[i] = tempSize;
+	}
 }
   
-int memory_malloc(memBlock **block)			// creates blocks of memory for thread
-{
-	block.size = ;
-}
+
   
   // Provider inserts item into queue
   void *thread_MMS(void *arg)
@@ -179,19 +196,119 @@ int memory_malloc(memBlock **block)			// creates blocks of memory for thread
     }
   }
 
-  // Thread decreases items
-  void *thread_Remove(void *arg)
+  
+  void threader(void *arg)
   {
-    bool isDone = 0;
-    
-    //printf("Creating Buyer Thread: %d\n", (int*)arg);
+	  int threadSize = rand() %  (int)(1.5 * MAX_SIZE);
+	  switch(FIT)
+	  {
+		  case FIRST_FIT:
+		  first_Fit(memBlock);
+		  break;
+		  case BEST_FIT:
+		  best_Fit(memBlock);
+		  break;
+		  case WORST_FIT:
+		  worst_FIT(memBlock);
+		  break;
+	  }
+  }
+  
+int memory_malloc(memBlock *block, int threadSize)			// creates blocks of memory for thread
+{
+	block.free = FALSE;
+	block.sizeFilled = threadSize;
+}
 
-    for(;isDone < 1;)
-    {
-      if(theQueue.empty())
+int memory_free(memBlock *block)
+{
+	block.free = TRUE
+	block.sizeFilled = 0;
+}
+  
+void first_Fit(memBlock *block, int threadSize, int blockNum)
+{
+  int filled = FALSE;
+  for(int i = 0; i < blockNum; i++)
+  {
+	  if(block[i].free == 1 && block[i].size >= threadSize)
+	  {
+		memory_malloc(block[i], threadSize);	
+		filled = TRUE;
+	  }
+  }
+  if(!filled)
+  {
+	  
+  }
+}
+  
+void best_Fit(memBlock *block, int threadSize, int blockNum)
+{
+	int filled = FALSE;
+	memBlock *bestFitSoFar = 0;
+	int bestSize = MAX_SIZE;
+    for(int i = 0; i < blockNum; i++)
+	{
+		if(block[i].free == 1 && block[i].size >= threadSize)
+		{
+			if(bestSize > block[i].size)
+			{
+				bestSize = block[i].size;
+				bestFitSoFar = block[i];
+			}
+		}	
+	}
+	if(bestFitSoFar)
+	{
+		memory_malloc(best, threadSize);	
+		filled = TRUE;
+	}
+	else
+	{
+
+	}
+}
+
+void worst_Fit(memBlock *blocks)
+{
+  	int filled = FALSE;
+	memBlock *biggest = 0;
+	int bestSize = 0;
+    for(int i = 0; i < blockNum; i++)
+	{
+		if(block[i].free == 1 && block[i].size >= threadSize)
+		{
+			if(bestSize < block[i].size)
+			{
+				bestSize = block[i].size;
+				biggest = block[i];
+			}
+		}	
+	}
+	if(bestFitSoFar)
+	{
+		memory_malloc(best, threadSize);	
+		filled = TRUE;
+	}
+	else
+	{
+
+	}
+}
+// Thread decreases items
+void *thread_Remove(void *arg)
+{
+	bool isDone = 0;
+		
+	//printf("Creating Buyer Thread: %d\n", (int*)arg);
+
+	for(;isDone < 1;)
+	{
+	  if(theQueue.empty())
 	sleep(.5);
-      else
-      {	  
+	  else
+	  {	  
 	sem_wait(&bin_sem);	//decrease index_counter
 	pthread_mutex_lock(&mutx);
 	sleep(.5);
@@ -202,9 +319,9 @@ int memory_malloc(memBlock **block)			// creates blocks of memory for thread
 	//theItem = 0;
 	printf("index subbed - index: %d - counter: %d\n", index_counter, counter);
 	index_counter--;
-	
+
 	pthread_mutex_unlock(&mutx);
 	isDone = 1;
-      }
-  }	
+	  }
+	}	
 }
